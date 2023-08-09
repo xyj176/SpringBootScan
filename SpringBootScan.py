@@ -55,35 +55,62 @@ def text_create():  # 创建报告文本
         name = line
         break
     now = int(time.time())  # 获取时间戳
-    timeArray = time.localtime(now)  # 格式化时间戳为本地的时间
-    otherStyleTime = time.strftime("%H%M%S", timeArray)  # 格式化时间，获取时分秒
-    report_path = 'result/' + name.split('.')[1] + otherStyleTime + '_report.txt'  # 获取文本第一行域名，并且添加时分秒为报告名字
+    time_array = time.localtime(now)  # 格式化时间戳为本地的时间
+    other_style_time = time.strftime("%H%M%S", time_array)  # 格式化时间，获取时分秒
+    report_path = 'result/' + name.split('.')[1] + other_style_time + '_report.txt'  # 获取文本第一行域名，并且添加时分秒为报告名字
 
 
-def getRule(r, url, report):
+def get_rule(r, url, report):
     # 判断报告中是否已存在该URL
-    if "swagger" in r.url and r.status_code == 200:
-        if "springfox-swagger-ui" in r.text or "springfox.css" in r.text:
-            print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
-                  '\033[1;31m疑似存在springboot信息泄漏，请自行确认\033[0m')
-            report.write(url + '\n')
-        else:
-            print('\033[0;34m[%s]\033[0m \033[0;32m<KEYWORD_NOT_FOUND>\033[0m' % r.status_code,
-                  '\033[0;33m%s\033[0m' % url)
-    elif "OSS" in r.text:
+    if "OSS" in r.text:
         print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
               '\033[1;31m疑似存在阿里云OSS密钥信息泄漏，请自行确认\033[0m')
-        report.write(url + '\n')
-    elif 'title="%s"' % url in r.text:
+        report.write('[%s] ' % r.status_code + url + ' 疑似存在阿里云OSS密钥信息泄漏，请自行确认' + '\n')
+    if 'title="%s"' % url in r.text:
         print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
               '\033[1;31m疑似存在springboot信息泄漏，请自行确认\033[0m')
-        report.write(url + '\n')
-    elif "actuator" in url and r.status_code == 200:
-        print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
-              '\033[1;31m疑似存在actuator信息泄漏，请自行确认\033[0m')
-        report.write(url + '\n')
+        report.write('[%s] ' % r.status_code + url + ' 疑似存在springboot信息泄漏，请自行确认' + '\n')
+    if r.status_code == 200:
+        # 200的都是未鉴权的
+        print('\033[0;34m[%s]\033[0m \033[0;32m<未鉴权>\033[0m' % r.status_code,
+              '\033[0;33m%s\033[0m' % url)
+        report.write('[%s] ' % r.status_code + url + ' 未鉴权，请自行确认' + '\n')
+        if "swagger" in r.url:
+            print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
+                  '\033[1;31m疑似存在springboot信息泄漏，请自行确认\033[0m')
+            report.write('[%s] ' % r.status_code + url + ' 疑似存在springboot信息泄漏，请自行确认' + '\n')
+        elif "actuator" in url:
+            print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
+                  '\033[1;31m疑似存在actuator信息泄漏，请自行确认\033[0m')
+            report.write('[%s] ' % r.status_code + url + ' 疑似存在actuator信息泄漏，请自行确认' + '\n')
     else:
         print('\033[0;34m[%s]\033[0m \033[0;32m<KEYWORD_NOT_FOUND>\033[0m' % r.status_code, '\033[0;33m%s\033[0m' % url)
+
+
+# def getRule(r, url, report):
+#     # 判断报告中是否已存在该URL
+#     if "swagger" in r.url and r.status_code == 200:
+#         if "springfox-swagger-ui" in r.text or "springfox.css" in r.text:
+#             print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
+#                   '\033[1;31m疑似存在springboot信息泄漏，请自行确认\033[0m')
+#             report.write(url + ' status_code:' + r.status_code + '\n')
+#         else:
+#             print('\033[0;34m[%s]\033[0m \033[0;32m<KEYWORD_NOT_FOUND>\033[0m' % r.status_code,
+#                   '\033[0;33m%s\033[0m' % url)
+#     elif "OSS" in r.text:
+#         print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
+#               '\033[1;31m疑似存在阿里云OSS密钥信息泄漏，请自行确认\033[0m')
+#         report.write(url + ' status_code:' + r.status_code + '\n')
+#     elif 'title="%s"' % url in r.text:
+#         print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
+#               '\033[1;31m疑似存在springboot信息泄漏，请自行确认\033[0m')
+#         report.write(url + ' status_code:' + r.status_code + '\n')
+#     elif "actuator" in url and r.status_code == 200:
+#         print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
+#               '\033[1;31m疑似存在actuator信息泄漏，请自行确认\033[0m')
+#         report.write(url + ' status_code:' + r.status_code + '\n')
+#     else:
+#         print('\033[0;34m[%s]\033[0m \033[0;32m<KEYWORD_NOT_FOUND>\033[0m' % r.status_code, '\033[0;33m%s\033[0m' % url)
 
 
 def req(line1, line2, report):  # 发送请求
@@ -99,8 +126,9 @@ def req(line1, line2, report):  # 发送请求
         # else:
         u = line1.replace('\n', '') + line2.replace('\n', '')
         r = requests.get(u, headers=headers, allow_redirects=False)
-        getRule(r, u, report)
-    except:
+        get_rule(r, u, report)
+    except Exception as e:
+        print(e)
         print('\033[0;34m[%s]\033[0m \033[0;32m<ERROR>\033[0m \033[1;31m%s\033[0m' % (r.status_code, u))  # 输出异常信息
         sys.exit()
 
