@@ -114,6 +114,7 @@ def get_rule(r, url, report):
 
 
 def req(line1, line2, report):  # 发送请求
+    r = None
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -124,9 +125,19 @@ def req(line1, line2, report):  # 发送请求
         #    r = requests.post(u,headers=headers,allow_redirects=False,verify=False)证书校验关闭
         #    getRule(r,u,report)#调用判断方法
         # else:
-        u = line1.replace('\n', '') + line2.replace('\n', '')
-        r = requests.get(u, headers=headers, allow_redirects=False)
-        get_rule(r, u, report)
+        for line in open('dic/app_name.txt'):
+            line = line.strip()
+            u = line1.replace('\n', '') + line.replace('\n', '')
+            if u.endswith('/'):
+                u = u[:-1]  # 去掉最后一个/
+                u = u + line2.replace('\n', '')
+            print(u)
+            try:
+                r = requests.get(u, headers=headers, allow_redirects=False)
+            except:
+                pass
+            if r is not None:
+                get_rule(r, u, report)
     except:
         print('\033[0;34m[%s]\033[0m \033[0;32m<ERROR>\033[0m \033[1;31m%s\033[0m' % (r.status_code, u))  # 输出异常信息
         sys.exit()
@@ -143,11 +154,11 @@ def get_url(line2):
                 req(line1.strip('/'), line2, report)  # 删除尾部/，strip只删除头尾部的关键字
             else:
                 req(line1, line2, report)
-        report.close()
     except:
+        pass
+    finally:
         # 发生错误时也要关闭文件，否则会出现文件占用的情况
         report.close()
-        pass
 
 
 if __name__ == '__main__':
@@ -180,4 +191,4 @@ if __name__ == '__main__':
         print(e)
         print('ERROR')
     # # 解决打包生成的exe运行完直接退出的问题
-    # os.system('pause')
+    os.system('pause')
