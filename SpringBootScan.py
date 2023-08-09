@@ -127,8 +127,7 @@ def req(line1, line2, report):  # 发送请求
         u = line1.replace('\n', '') + line2.replace('\n', '')
         r = requests.get(u, headers=headers, allow_redirects=False)
         get_rule(r, u, report)
-    except Exception as e:
-        print(e)
+    except:
         print('\033[0;34m[%s]\033[0m \033[0;32m<ERROR>\033[0m \033[1;31m%s\033[0m' % (r.status_code, u))  # 输出异常信息
         sys.exit()
 
@@ -146,6 +145,8 @@ def get_url(line2):
                 req(line1, line2, report)
         report.close()
     except:
+        # 发生错误时也要关闭文件，否则会出现文件占用的情况
+        report.close()
         pass
 
 
@@ -175,7 +176,8 @@ if __name__ == '__main__':
         else:
             os.remove(report_path)  # 不存在则删除报告文件
             print('\n\033[1;31m测试结束，未发现疑似存在漏洞的URL\033[0m')
-    except:
+    except Exception as e:
+        print(e)
         print('ERROR')
     # # 解决打包生成的exe运行完直接退出的问题
     # os.system('pause')

@@ -19,3 +19,4 @@
 /swagger-ui/index.html
 /v2/api-docs
 /swagger.yaml
+/v3/api-docs
