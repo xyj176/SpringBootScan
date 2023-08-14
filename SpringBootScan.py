@@ -52,15 +52,21 @@ def run():
     time.sleep(1)
 
 
-def html_create():  # 创建报告文本
-    global report_path
+def report_create(suffix: str):
+    """
+    生成报告路径
+    :param suffix: 报告格式，如‘txt’,'html'
+    :return:
+    """
     now = int(time.time())  # 获取时间戳
     time_array = time.localtime(now)  # 格式化时间戳为本地的时间
     other_style_time = time.strftime("%H%M%S", time_array)  # 格式化时间，获取时分秒
-    report_path = 'result/' + other_style_time + '_report.html'  # 获取文本第一行域名，并且添加时分秒为报告名字
+    report_path = 'result/' + other_style_time + '_report.' + suffix  # 获取文本第一行域名，并且添加时分秒为报告名字
+    return report_path
 
 
-def get_rule(r, url):
+def get_rule(r):
+    url = r.url
     content = None
     global count
     # 判断报告中是否已存在该URL
@@ -69,6 +75,7 @@ def get_rule(r, url):
         print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
               '\033[1;31m疑似存在阿里云OSS密钥信息泄漏，请自行确认\033[0m')
         content = '[%s] ' % r.status_code + url + ' 疑似存在阿里云OSS密钥信息泄漏，请自行确认'
+        txt_report_file.write(content + '\n')
         with doc:
             a(content, href=url, target='_blank')
             br()
@@ -77,6 +84,7 @@ def get_rule(r, url):
         print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
               '\033[1;31m疑似存在springboot信息泄漏，请自行确认\033[0m')
         content = '[%s] ' % r.status_code + url + ' 疑似存在springboot信息泄漏，请自行确认'
+        txt_report_file.write(content + '\n')
         with doc:
             a(content, href=url, target='_blank')
             br()
@@ -86,6 +94,7 @@ def get_rule(r, url):
         print('\033[0;34m[%s]\033[0m \033[0;32m<未鉴权>\033[0m' % r.status_code,
               '\033[0;33m%s\033[0m' % url)
         content = '[%s] ' % r.status_code + url + ' 未鉴权，请自行确认'
+        txt_report_file.write(content + '\n')
         with doc:
             a(content, href=url, target='_blank')
             br()
@@ -94,6 +103,7 @@ def get_rule(r, url):
             print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
                   '\033[1;31m疑似存在springboot信息泄漏，请自行确认\033[0m')
             content = '[%s] ' % r.status_code + url + ' 疑似存在springboot信息泄漏，请自行确认'
+            txt_report_file.write(content + '\n')
             with doc:
                 a(content, href=url, target='_blank')
                 br()
@@ -102,15 +112,12 @@ def get_rule(r, url):
             print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
                   '\033[1;31m疑似存在actuator信息泄漏，请自行确认\033[0m')
             content = '[%s] ' % r.status_code + url + ' 疑似存在actuator信息泄漏，请自行确认'
+            txt_report_file.write(content + '\n')
             with doc:
                 a(content, href=url, target='_blank')
                 br()
     else:
         print('\033[0;34m[%s]\033[0m \033[0;32m<KEYWORD_NOT_FOUND>\033[0m' % r.status_code, '\033[0;33m%s\033[0m' % url)
-        # content = '[%s] ' % r.status_code + url
-        # with doc:
-        #     a(content, href=url, target='_blank')
-        #     br()
 
 
 def req(url, path):  # 发送请求
@@ -136,7 +143,7 @@ def req(url, path):  # 发送请求
             except:
                 pass
             if r is not None:
-                get_rule(r, full_url)
+                get_rule(r)
     except:
         print(
             '\033[0;34m[%s]\033[0m \033[0;32m<ERROR>\033[0m \033[1;31m%s\033[0m' % (r.status_code, full_url))  # 输出异常信息
@@ -160,9 +167,10 @@ def get_url(path):
 if __name__ == '__main__':
     run()
     count = 0  # 疑似的漏洞数量
-    report_path = 0  # 报告路径
-    html_create()  # 程序启动时，先创建报告文件
-    title = Path(report_path).stem
+    txt_report = report_create('txt')  # 程序启动时，先创建报告文件
+    txt_report_file = open(txt_report, 'a+')
+    html_report = report_create('html')  # 程序启动时，先创建报告文件
+    title = Path(html_report).stem
     doc = dominate.document(title=title)
     try:
         # 多线程异步抓取
@@ -177,13 +185,14 @@ if __name__ == '__main__':
         print('\033[0;34m[000]\033[0m \033[0;32m<ERROR>\033[0m  \033[1;31mThreadException\033[0m')
 
     try:
-        with open(report_path, 'w') as f:
+        txt_report_file.close()
+        with open(html_report, 'w') as f:
             f.write(doc.render())
         if count != 0:  # 检测是否存在漏洞
             print('\n\033[1;31m测试结束，共发现%s处疑似存在该漏洞的URL：\033[0m' % count)
-            print('\033[1;31m测试结果已保存至result文件夹下的%s中\033[0m' % report_path)
+            print('\033[1;31m测试结果已保存至result文件夹下的%s中\033[0m' % txt_report)
         else:
-            os.remove(report_path)  # 不存在则删除报告文件
+            os.remove(txt_report)  # 不存在则删除报告文件
             print('\n\033[1;31m测试结束，未发现疑似存在漏洞的URL\033[0m')
     except Exception as e:
         print(e)
