@@ -72,8 +72,6 @@ def get_rule(r):
     # 判断报告中是否已存在该URL
     if "OSS" in r.text:
         count += 1
-        print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
-              '\033[1;31m疑似存在阿里云OSS密钥信息泄漏，请自行确认\033[0m')
         content = '[%s] ' % r.status_code + url + ' 疑似存在阿里云OSS密钥信息泄漏，请自行确认'
         txt_report_file.write(content + '\n')
         with doc:
@@ -81,8 +79,6 @@ def get_rule(r):
             br()
     if 'title="%s"' % url in r.text:
         count += 1
-        print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
-              '\033[1;31m疑似存在springboot信息泄漏，请自行确认\033[0m')
         content = '[%s] ' % r.status_code + url + ' 疑似存在springboot信息泄漏，请自行确认'
         txt_report_file.write(content + '\n')
         with doc:
@@ -91,8 +87,6 @@ def get_rule(r):
     if r.status_code == 200:
         count += 1
         # 200的都是未鉴权的
-        print('\033[0;34m[%s]\033[0m \033[0;32m<未鉴权>\033[0m' % r.status_code,
-              '\033[0;33m%s\033[0m' % url)
         content = '[%s] ' % r.status_code + url + ' 未鉴权，请自行确认'
         txt_report_file.write(content + '\n')
         with doc:
@@ -100,8 +94,6 @@ def get_rule(r):
             br()
         if "swagger" in r.url:
             count += 1
-            print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
-                  '\033[1;31m疑似存在springboot信息泄漏，请自行确认\033[0m')
             content = '[%s] ' % r.status_code + url + ' 疑似存在springboot信息泄漏，请自行确认'
             txt_report_file.write(content + '\n')
             with doc:
@@ -109,15 +101,13 @@ def get_rule(r):
                 br()
         elif "actuator" in url:
             count += 1
-            print('\033[0;34m[%s]\033[0m \033[0;32m<SUSPECT>\033[0m' % r.status_code, '\033[0;35m%s\033[0m' % url,
-                  '\033[1;31m疑似存在actuator信息泄漏，请自行确认\033[0m')
             content = '[%s] ' % r.status_code + url + ' 疑似存在actuator信息泄漏，请自行确认'
             txt_report_file.write(content + '\n')
             with doc:
                 a(content, href=url, target='_blank')
                 br()
     else:
-        print('\033[0;34m[%s]\033[0m \033[0;32m<KEYWORD_NOT_FOUND>\033[0m' % r.status_code, '\033[0;33m%s\033[0m' % url)
+        pass
 
 
 def req(url, path):  # 发送请求
@@ -137,16 +127,16 @@ def req(url, path):  # 发送请求
             full_url = url.replace('\n', '') + app_name.replace('\n', '')
             if full_url.endswith('/'):
                 full_url = full_url[:-1]  # 去掉最后一个/
-                full_url = full_url + path.replace('\n', '')
+            full_url = full_url + path.replace('\n', '')
+            print('开始检测的url:[%s]' % full_url)
             try:
                 r = requests.get(full_url, headers=headers, allow_redirects=False)
             except:
                 pass
             if r is not None:
                 get_rule(r)
-    except:
-        print(
-            '\033[0;34m[%s]\033[0m \033[0;32m<ERROR>\033[0m \033[1;31m%s\033[0m' % (r.status_code, full_url))  # 输出异常信息
+    except Exception as e:
+        print(e)  # 输出异常信息
         sys.exit()
 
 
@@ -181,21 +171,20 @@ if __name__ == '__main__':
             t.start()  # 开启线程
         for t in threads:
             t.join()  # join所完成的工作就是线程同步，即主线程任务结束之后，进入阻塞状态，一直等待其他的子线程执行结束之后，主线程在终止
-    except:
-        print('\033[0;34m[000]\033[0m \033[0;32m<ERROR>\033[0m  \033[1;31mThreadException\033[0m')
+    except Exception as e:
+        print(e)
 
     try:
         txt_report_file.close()
         with open(html_report, 'w') as f:
             f.write(doc.render())
         if count != 0:  # 检测是否存在漏洞
-            print('\n\033[1;31m测试结束，共发现%s处疑似存在该漏洞的URL：\033[0m' % count)
-            print('\033[1;31m测试结果已保存至result文件夹下的%s中\033[0m' % txt_report)
+            print('测试结束，共发现%s处疑似存在该漏洞的URL' % count)
+            print('测试结果已保存至result文件夹下的%s中' % txt_report)
         else:
             os.remove(txt_report)  # 不存在则删除报告文件
-            print('\n\033[1;31m测试结束，未发现疑似存在漏洞的URL\033[0m')
+            print('测试结束，未发现疑似存在漏洞的URL')
     except Exception as e:
         print(e)
-        print('ERROR')
     # # 解决打包生成的exe运行完直接退出的问题
-    os.system('pause')
+    # os.system('pause')
