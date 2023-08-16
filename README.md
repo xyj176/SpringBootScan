@@ -7,9 +7,17 @@
 <p></p>
 <p></p>
 
-    * 将需要测试的URL放入url.txt中，格式如下：
-    * https://www.example.com
-    * https://www.example.com
+    * 将需要测试的域名放入url.txt中，格式如下：
+      https://www.example.com
+      https://ip:port
 
-    * 测试报告在result/目录下，报告命名为：url列表中第一个url的 域名 加 时分秒
+    * 将应用的名称放入【dic】下的app_name.txt,格式如下：
+      /
+      /dgp
+
+    * 将后续路径放入【dic】下的path.txt，格式如下：
+      /nacos
+      /app/kibana
+
+    * 测试报告在result/目录下，报告命名为：时分秒
     * 边学边写，所以所有的注释就不删除了
