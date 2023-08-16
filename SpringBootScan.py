@@ -183,6 +183,7 @@ if __name__ == '__main__':
             print('测试结果已保存至result文件夹下的%s中' % txt_report)
         else:
             os.remove(txt_report)  # 不存在则删除报告文件
+            os.remove(html_report)  # 不存在则删除报告文件
             print('测试结束，未发现疑似存在漏洞的URL')
     except Exception as e:
         print(e)
